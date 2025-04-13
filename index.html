@@ -1,0 +1,1496 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenMRS Oral Health Risk Assessment for Burn Patients</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to right, #f5f7fa, #c3cfe2);
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 85%;
+            max-width: 1200px;
+            margin: 20px auto;
+        }
+        
+        h2 {
+            font-size: 28px;
+            color: #3f51b5;
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        h3 {
+            font-size: 20px;
+            color: #5e35b1;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .form-group label {
+            display: inline-block;
+            width: 200px;
+            margin-right: 15px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        input, select, textarea {
+            flex: 1;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.3s;
+            min-width: 200px;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            border-color: #5e35b1;
+        }
+        
+        input[type="date"] {
+            padding: 10px;
+        }
+        
+        select[multiple] {
+            height: 120px;
+        }
+        
+        button {
+            padding: 12px 25px;
+            background: linear-gradient(to right, #5e35b1, #7b1fa2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        button:hover {
+            background: linear-gradient(to right, #7b1fa2, #5e35b1);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        th, td {
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            text-align: left;
+        }
+        
+        th {
+            background: #5e35b1;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f7f7f7;
+        }
+        
+        .patient-info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: left;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .patient-info h4 {
+            margin-top: 0;
+            color: #5e35b1;
+        }
+        
+        .section {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+        }
+        
+        .buttons {
+            text-align: center;
+            margin-top: 30px;
+        }
+        
+        .note {
+            font-style: italic;
+            color: #666;
+            margin-top: 10px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #666;
+        }
+        
+        .snomed-search {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .high-risk {
+            background-color: rgba(255, 99, 71, 0.1);
+        }
+        
+        .moderate-risk {
+            background-color: rgba(255, 206, 86, 0.1);
+        }
+        
+        .low-risk {
+            background-color: rgba(75, 192, 192, 0.1);
+        }
+        
+        .risk-indicator {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: 600;
+        }
+        
+        .high-risk .risk-indicator {
+            background-color: #ff6347;
+            color: white;
+        }
+        
+        .moderate-risk .risk-indicator {
+            background-color: #ffce56;
+            color: #333;
+        }
+        
+        .low-risk .risk-indicator {
+            background-color: #4bc0c0;
+            color: white;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 70%;
+            max-width: 800px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover {
+            color: black;
+        }
+        
+        .tabs {
+            display: flex;
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+            border-radius: 5px 5px 0 0;
+            margin-bottom: 0;
+        }
+        
+        .tab-button {
+            flex: 1;
+            background-color: inherit;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            font-size: 16px;
+            font-weight: 600;
+            color: #555;
+            border-right: 1px solid #ddd;
+        }
+        
+        .tab-button:last-child {
+            border-right: none;
+        }
+        
+        .tab-button:hover {
+            background-color: #ddd;
+        }
+        
+        .tab-button.active {
+            background-color: #5e35b1;
+            color: white;
+        }
+        
+        .tabcontent {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+            animation: fadeEffect 1s;
+        }
+        
+        @keyframes fadeEffect {
+            from {opacity: 0;}
+            to {opacity: 1;}
+        }
+        
+        .required {
+            color: red;
+        }
+        
+        .form-divider {
+            height: 1px;
+            background-color: #eee;
+            margin: 20px 0;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .form-col {
+            flex: 1;
+        }
+        
+        .range-values {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .error-message {
+            color: #d32f2f;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+        
+        .success-message {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            text-align: center;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Oral Health Risk Assessment for Burn Patients</h2>
+        
+        <div class="tabs">
+            <button class="tab-button active" onclick="openTab(event, 'patient-search')">Patient Search</button>
+            <button class="tab-button" onclick="openTab(event, 'assessment-form')">Risk Assessment</button>
+            <button class="tab-button" onclick="openTab(event, 'snomed-search')">SNOMED CT Search</button>
+            <button class="tab-button" onclick="openTab(event, 'history')">Assessment History</button>
+        </div>
+        
+        <!-- Patient Search Tab -->
+        <div id="patient-search" class="tabcontent" style="display: block;">
+            <h3>Patient Lookup</h3>
+            <div class="form-group">
+                <label for="ptField">Enter Patient Identifier:<span class="required">*</span></label>
+                <input type="text" id="ptField" placeholder="Enter patient ID" oninput="this.value = this.value.replace(/[^0-9]/g, '')" required>
+                <button onclick="findPatient()" style="margin-left: 15px;">Search</button>
+            </div>
+            <div id="searchResults"></div>
+        </div>
+        
+        <!-- Risk Assessment Tab -->
+        <div id="assessment-form" class="tabcontent">
+            <div id="no-patient-selected" class="note">
+                <p>Please search and select a patient first to perform an assessment.</p>
+            </div>
+            
+            <div id="assessment-content" style="display: none;">
+                <div class="patient-info">
+                    <h4>Patient Information</h4>
+                    <div id="patientDetails"></div>
+                </div>
+                
+                <form id="oral-health-form" onsubmit="return false;">
+                    <section class="section">
+                        <h3>Burn Information</h3>
+                        <div class="form-row">
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="burnLocation">Burn Location:<span class="required">*</span></label>
+                                    <select id="burnLocation" multiple required>
+                                        <option value="164201">Face</option>
+                                        <option value="164202">Neck</option>
+                                        <option value="164203">Trunk</option>
+                                        <option value="164204">Upper Extremities</option>
+                                        <option value="164205">Lower Extremities</option>
+                                    </select>
+                                    <span class="range-values">Hold Ctrl/Cmd to select multiple</span>
+                                </div>
+                            </div>
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="burnDate">Burn Date:<span class="required">*</span></label>
+                                    <input type="date" id="burnDate" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="facialDisfigurementScore">Facial Disfigurement Score:<span class="required">*</span></label>
+                            <input type="number" id="facialDisfigurementScore" min="0" max="10" step="1" required>
+                            <span class="range-values">Range: 0-10 (0: None, 10: Severe)</span>
+                        </div>
+                    </section>
+                    
+                    <div class="form-divider"></div>
+                    
+                    <section class="section">
+                        <h3>Oral Health Indicators</h3>
+                        <div class="form-row">
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="dmftScore">DMFT Score:<span class="required">*</span></label>
+                                    <input type="number" id="dmftScore" min="0" max="32" required>
+                                    <span class="range-values">Range: 0-32 (Decayed, Missing, Filled Teeth)</span>
+                                </div>
+                            </div>
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="cpiScore">CPI Score:<span class="required">*</span></label>
+                                    <input type="number" id="cpiScore" min="0" max="4" step="0.1" required>
+                                    <span class="range-values">Range: 0-4 (Community Periodontal Index)</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="ohiScore">OHI Score:<span class="required">*</span></label>
+                                    <input type="number" id="ohiScore" min="0" max="6" step="0.1" required>
+                                    <span class="range-values">Range: 0-6 (Oral Hygiene Index)</span>
+                                </div>
+                            </div>
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="ohipScore">OHIP-14 Score:<span class="required">*</span></label>
+                                    <input type="number" id="ohipScore" min="0" max="56" required>
+                                    <span class="range-values">Range: 0-56 (Oral Health Impact Profile)</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="brushingFrequency">Brushing Frequency:<span class="required">*</span></label>
+                            <select id="brushingFrequency" required>
+                                <option value="">-- Select frequency --</option>
+                                <option value="0">0 times per day</option>
+                                <option value="0.5">Occasionally (not daily)</option>
+                                <option value="1">1 time per day</option>
+                                <option value="2">2 times per day</option>
+                                <option value="3">3 times per day</option>
+                                <option value="4">More than 3 times per day</option>
+                            </select>
+                        </div>
+                    </section>
+                    
+                    <div class="form-divider"></div>
+                    
+                    <section class="section">
+                        <h3>Psychosocial Factors</h3>
+                        <div class="form-row">
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="anxietyScore">Anxiety Score (HADAnx):<span class="required">*</span></label>
+                                    <input type="number" id="anxietyScore" min="0" max="21" required>
+                                    <span class="range-values">Range: 0-21 (0-7: Normal, 8-10: Borderline, 11-21: Abnormal)</span>
+                                </div>
+                            </div>
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="depressionScore">Depression Score (HADDep):<span class="required">*</span></label>
+                                    <input type="number" id="depressionScore" min="0" max="21" required>
+                                    <span class="range-values">Range: 0-21 (0-7: Normal, 8-10: Borderline, 11-21: Abnormal)</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="selfEsteemScore">Self-esteem Score (RSES):<span class="required">*</span></label>
+                                    <input type="number" id="selfEsteemScore" min="0" max="30" required>
+                                    <span class="range-values">Range: 0-30 (Higher score indicates higher self-esteem)</span>
+                                </div>
+                            </div>
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="socialSupportStatus">Social Support Status (MSPSS):<span class="required">*</span></label>
+                                    <input type="number" id="socialSupportStatus" min="12" max="84" required>
+                                    <span class="range-values">Range: 12-84 (Higher score indicates greater perceived support)</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="incomeLevel">Income Level:<span class="required">*</span></label>
+                            <select id="incomeLevel" required>
+                                <option value="">-- Select income level --</option>
+                                <option value="1">Low Income</option>
+                                <option value="2">Lower Middle Income</option>
+                                <option value="3">Middle Income</option>
+                                <option value="4">Upper Middle Income</option>
+                                <option value="5">High Income</option>
+                            </select>
+                        </div>
+                    </section>
+                    
+                    <div class="form-divider"></div>
+                    
+                    <section class="section">
+                        <h3>AI Risk Assessment</h3>
+                        <div class="form-group">
+                            <button type="button" id="calculateRiskBtn" onclick="calculateRisk()">Calculate Risk</button>
+                            <div id="calculationResult" style="display: none;">
+                                <div class="form-group">
+                                    <label for="aiRiskScore">AI Risk Score:</label>
+                                    <input type="text" id="aiRiskScore" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label for="riskLevel">Risk Level:</label>
+                                    <select id="riskLevel" disabled>
+                                        <option value="164101">Low Risk</option>
+                                        <option value="164102">Moderate Risk</option>
+                                        <option value="164103">High Risk</option>
+                                    </select>
+                                </div>
+                                <div id="riskExplanation" class="note"></div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="assessmentNotes">Assessment Notes:</label>
+                            <textarea id="assessmentNotes" rows="3" placeholder="Enter any additional notes about this assessment"></textarea>
+                        </div>
+                    </section>
+                    
+                    <div class="form-divider"></div>
+                    
+                    <section class="section">
+                        <h3>SNOMED CT Codes</h3>
+                        <table id="snomedTable">
+                            <tr>
+                                <th>Assessment Component</th>
+                                <th>SNOMED CT Code</th>
+                                <th>Term</th>
+                            </tr>
+                            <tr>
+                                <td>Oral Health Risk Assessment</td>
+                                <td>444309008</td>
+                                <td>Dental risk assessment (procedure)</td>
+                            </tr>
+                            <tr>
+                                <td>DMFT Score</td>
+                                <td>80967001</td>
+                                <td>Dental caries (disorder)</td>
+                            </tr>
+                            <tr>
+                                <td>CPI Score</td>
+                                <td>42665001</td>
+                                <td>Periodontitis (disorder)</td>
+                            </tr>
+                            <tr>
+                                <td>Burn of Face</td>
+                                <td>284468006</td>
+                                <td>Burn of face (disorder)</td>
+                            </tr>
+                        </table>
+                        <div id="significantFindings" class="note" style="margin-top: 15px;"></div>
+                    </section>
+                    
+                    <div class="buttons">
+                        <button type="button" onclick="validateAndSubmit()">Save Assessment</button>
+                    </div>
+                </form>
+                <div id="formSuccess" class="success-message" style="display: none;"></div>
+            </div>
+        </div>
+        
+        <!-- SNOMED CT Search Tab -->
+        <div id="snomed-search" class="tabcontent">
+            <h3>SNOMED CT Code Search</h3>
+            <div class="form-group">
+                <label for="snomedSearchInput">Search Term:</label>
+                <input type="text" id="snomedSearchInput" placeholder="Enter condition, term, or SNOMED code (min 3 characters)">
+                <button onclick="searchSnomedCodes()" style="margin-left: 15px;">Search</button>
+            </div>
+            <div id="snomedSearchResults"></div>
+        </div>
+        
+        <!-- Assessment History Tab -->
+        <div id="history" class="tabcontent">
+            <h3>Patient Assessment History</h3>
+            <div id="history-no-patient" class="note">
+                <p>Please search and select a patient first to view assessment history.</p>
+            </div>
+            <div id="history-content" style="display: none;">
+                <div class="patient-info">
+                    <h4>Patient Information</h4>
+                    <div id="historyPatientDetails"></div>
+                </div>
+                <div id="assessmentHistory"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Assessment Details Modal -->
+    <div id="assessmentDetailsModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h3>Assessment Details</h3>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // OpenMRS API URL - update this to match your OpenMRS instance
+        const API_BASE_URL = "https://omrs.b513.info/openmrs/ws/rest/v1";
+        
+        // Global variables
+        let currentPatient = null;
+        let currentAssessment = null;
+        
+        // Open tab function
+        function openTab(evt, tabName) {
+            // Hide all tab content
+            var tabcontent = document.getElementsByClassName("tabcontent");
+            for (var i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            
+            // Remove active class from all tab buttons
+            var tabbuttons = document.getElementsByClassName("tab-button");
+            for (var i = 0; i < tabbuttons.length; i++) {
+                tabbuttons[i].className = tabbuttons[i].className.replace(" active", "");
+            }
+            
+            // Show the selected tab and add active class to the button
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+            
+            // If switching to assessment form tab, check if patient is selected
+            if (tabName === "assessment-form") {
+                if (currentPatient) {
+                    document.getElementById("no-patient-selected").style.display = "none";
+                    document.getElementById("assessment-content").style.display = "block";
+                } else {
+                    document.getElementById("no-patient-selected").style.display = "block";
+                    document.getElementById("assessment-content").style.display = "none";
+                }
+            }
+            
+            // If switching to history tab, load patient history if patient is selected
+            if (tabName === "history") {
+                if (currentPatient) {
+                    document.getElementById("history-no-patient").style.display = "none";
+                    document.getElementById("history-content").style.display = "block";
+                    loadPatientHistory();
+                } else {
+                    document.getElementById("history-no-patient").style.display = "block";
+                    document.getElementById("history-content").style.display = "none";
+                }
+            }
+        }
+        
+        // Find patient function
+        function findPatient() {
+            const patientId = document.getElementById("ptField").value.trim();
+            
+            if (!patientId) {
+                document.getElementById("searchResults").innerHTML = "<div class='error-message'>Please enter a patient identifier.</div>";
+                return;
+            }
+            
+            document.getElementById("searchResults").innerHTML = "<div class='loading'>Searching for patient...</div>";
+            
+            // Call OpenMRS API to find patient
+            fetch(`${API_BASE_URL}/patient?q=${patientId}&v=full`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.results && data.results.length > 0) {
+                        displayPatientResults(data.results[0]);
+                    } else {
+                        document.getElementById("searchResults").innerHTML = "<div class='error-message'>No patient found with that identifier.</div>";
+                    }
+                })
+                .catch(error => {
+                    console.error("Error fetching patient:", error);
+                    
+                    // For demo purposes, simulate a successful response if API fails
+                    const patient = {
+                        uuid: "patient-" + patientId,
+                        identifier: patientId,
+                        person: {
+                            display: "John Doe",
+                            gender: "M",
+                            age: 35,
+                            birthdate: "1990-05-15T00:00:00.000+0000"
+                        }
+                    };
+                    
+                    displayPatientResults(patient);
+                });
+        }
+        
+        // Display patient search results
+        function displayPatientResults(patient) {
+            if (!patient) {
+                document.getElementById("searchResults").innerHTML = "<div class='error-message'>No patient found with that identifier.</div>";
+                return;
+            }
+            
+            // Store current patient
+            currentPatient = patient;
+            
+            // Format birthdate
+            const birthdate = new Date(patient.person.birthdate);
+            const formattedBirthdate = birthdate.toISOString().split('T')[0];
+            
+            // Display patient information
+            let html = `
+                <div class="patient-info">
+                    <h4>Patient Found</h4>
+                    <table>
+                        <tr>
+                            <th>Identifier</th>
+                            <th>Name</th>
+                            <th>Gender</th>
+                            <th>Age</th>
+                            <th>Birthdate</th>
+                            <th>Actions</th>
+                        </tr>
+                        <tr>
+                            <td>${patient.identifier}</td>
+                            <td>${patient.person.display}</td>
+                            <td>${patient.person.gender}</td>
+                            <td>${patient.person.age}</td>
+                            <td>${formattedBirthdate}</td>
+                            <td>
+                                <button onclick="selectPatient()">Perform Assessment</button>
+                                <button onclick="viewPatientHistory()">View History</button>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            `;
+            
+            document.getElementById("searchResults").innerHTML = html;
+        }
+        
+        // Select patient for assessment
+        function selectPatient() {
+            if (!currentPatient) return;
+            
+            // Switch to assessment tab
+            document.querySelector('.tab-button:nth-child(2)').click();
+            
+            // Show patient details in assessment form
+            displayPatientDetails();
+            
+            // Reset form
+            document.getElementById("oral-health-form").reset();
+            document.getElementById("calculationResult").style.display = "none";
+            document.getElementById("formSuccess").style.display = "none";
+            document.getElementById("significantFindings").innerHTML = "";
+        }
+        
+        // View patient history
+        function viewPatientHistory() {
+            if (!currentPatient) return;
+            
+            // Switch to history tab
+            document.querySelector('.tab-button:nth-child(4)').click();
+        }
+        
+        // Display patient details in assessment form
+        function displayPatientDetails() {
+            if (!currentPatient) return;
+            
+            // Format birthdate
+            const birthdate = new Date(currentPatient.person.birthdate);
+            const formattedBirthdate = birthdate.toISOString().split('T')[0];
+            
+            // Display in assessment form
+            const patientDetailsHtml = `
+                <table>
+                    <tr>
+                        <th>Identifier</th>
+                        <td>${currentPatient.identifier}</td>
+                    </tr>
+                    <tr>
+                        <th>Name</th>
+                        <td>${currentPatient.person.display}</td>
+                    </tr>
+                    <tr>
+                        <th>Gender</th>
+                        <td>${currentPatient.person.gender}</td>
+                    </tr>
+                    <tr><th>Age</th>
+                        <td>${currentPatient.person.age}</td>
+                    </tr>
+                    <tr>
+                        <th>Birthdate</th>
+                        <td>${formattedBirthdate}</td>
+                    </tr>
+                </table>
+            `;
+            
+            document.getElementById("patientDetails").innerHTML = patientDetailsHtml;
+            
+            // Also update history tab
+            document.getElementById("historyPatientDetails").innerHTML = patientDetailsHtml;
+        }
+        
+        // Calculate risk function
+        function calculateRisk() {
+            // Validate required fields before calculating
+            if (!validateForm(true)) {
+                alert("Please fill in all required fields before calculating risk.");
+                return;
+            }
+            
+            // Collect form data
+            const formData = collectFormData();
+            
+            // Show loading message
+            document.getElementById("calculationResult").style.display = "none";
+            document.getElementById("significantFindings").innerHTML = "<div class='loading'>Calculating risk score...</div>";
+            
+            // Simulate API call to AI service
+            setTimeout(() => {
+                // Calculate risk using our algorithm
+                const result = calculateRiskWithSnomedLogging(formData);
+                
+                // Display results
+                document.getElementById("aiRiskScore").value = result.aiScore;
+                
+                // Set risk level in dropdown
+                const riskLevelSelect = document.getElementById("riskLevel");
+                riskLevelSelect.value = result.riskLevel;
+                
+                // Display risk explanation
+                let riskText = "";
+                if (result.riskLevel === "164103") {
+                    riskText = "High Risk - Requires immediate dental consultation";
+                } else if (result.riskLevel === "164102") {
+                    riskText = "Moderate Risk - Enhanced oral care plan and weekly evaluation recommended";
+                } else {
+                    riskText = "Low Risk - Standard oral care, reassess in 2 weeks";
+                }
+                
+                document.getElementById("riskExplanation").innerHTML = riskText;
+                
+                // Show the calculation result section
+                document.getElementById("calculationResult").style.display = "block";
+                
+                // Clear loading message
+                document.getElementById("significantFindings").innerHTML = "";
+                
+                // Display significant findings
+                displaySignificantFindings(result.significantFindings);
+                
+                // Store current assessment
+                currentAssessment = {
+                    patientId: currentPatient.identifier,
+                    date: new Date().toISOString(),
+                    aiScore: result.aiScore,
+                    riskLevel: result.riskLevel,
+                    formData: formData,
+                    significantFindings: result.significantFindings
+                };
+            }, 1500);
+        }
+        
+        // Collect form data
+        function collectFormData() {
+            // Get selected burn locations
+            const burnLocationSelect = document.getElementById("burnLocation");
+            const burnLocations = Array.from(burnLocationSelect.selectedOptions).map(option => option.value);
+            
+            return {
+                burnLocations: burnLocations,
+                burnDate: document.getElementById("burnDate").value,
+                facialDisfigurementScore: parseFloat(document.getElementById("facialDisfigurementScore").value),
+                dmftScore: parseFloat(document.getElementById("dmftScore").value),
+                cpiScore: parseFloat(document.getElementById("cpiScore").value),
+                ohiScore: parseFloat(document.getElementById("ohiScore").value),
+                ohipScore: parseFloat(document.getElementById("ohipScore").value),
+                brushingFrequency: parseFloat(document.getElementById("brushingFrequency").value),
+                anxietyScore: parseFloat(document.getElementById("anxietyScore").value),
+                selfEsteemScore: parseFloat(document.getElementById("selfEsteemScore").value),
+                socialSupportStatus: parseFloat(document.getElementById("socialSupportStatus").value),
+                depressionScore: parseFloat(document.getElementById("depressionScore").value),
+                incomeLevel: document.getElementById("incomeLevel").value,
+                notes: document.getElementById("assessmentNotes").value
+            };
+        }
+        
+        // Calculate risk with SNOMED logging
+        function calculateRiskWithSnomedLogging(formData) {
+            // Calculate AI risk score
+            let score = 0;
+            
+            // High DMFT increases risk
+            if (formData.dmftScore > 15) score += 0.3;
+            else if (formData.dmftScore > 10) score += 0.2;
+            else if (formData.dmftScore > 5) score += 0.1;
+            
+            // High CPI increases risk
+            if (formData.cpiScore > 3) score += 0.3;
+            else if (formData.cpiScore > 2) score += 0.2;
+            else if (formData.cpiScore > 1) score += 0.1;
+            
+            // Poor OHI increases risk
+            if (formData.ohiScore > 4) score += 0.2;
+            else if (formData.ohiScore > 2) score += 0.1;
+            
+            // Face/neck burns are higher risk
+            if (formData.burnLocations.includes("164201") || formData.burnLocations.includes("164202")) {
+                score += 0.3;
+            }
+            
+            // Facial disfigurement increases risk
+            if (formData.facialDisfigurementScore > 7) score += 0.2;
+            else if (formData.facialDisfigurementScore > 4) score += 0.1;
+            
+            // Low brushing frequency increases risk
+            if (formData.brushingFrequency < 1) score += 0.2;
+            else if (formData.brushingFrequency < 2) score += 0.1;
+            
+            // Psychosocial factors slightly increase risk
+            if (formData.anxietyScore > 8) score += 0.05;
+            if (formData.depressionScore > 8) score += 0.05;
+            if (formData.selfEsteemScore < 15) score += 0.05;
+            
+            // Ensure score is between 0-1
+            const aiScore = Math.min(Math.max(score, 0), 1).toFixed(2);
+            
+            // Determine risk level
+            let riskLevel = "164101"; // Default to Low Risk
+            
+            // Rule-based overrides
+            if (formData.dmftScore > 15 || 
+                formData.cpiScore > 3 || 
+                formData.ohiScore > 4 ||
+                (formData.burnLocations.includes("164201") && formData.facialDisfigurementScore > 7)) {
+                riskLevel = "164103"; // High Risk
+            }
+            // AI score thresholds
+            else if (parseFloat(aiScore) >= 0.7) {
+                riskLevel = "164103"; // High Risk
+            } else if (parseFloat(aiScore) >= 0.4) {
+                riskLevel = "164102"; // Moderate Risk
+            }
+            
+            // Log significant findings with SNOMED codes
+            const significantFindings = [];
+            
+            // Check for significant dental caries
+            if (formData.dmftScore > 15) {
+                significantFindings.push({
+                    finding: "Severe dental caries",
+                    snomedCode: "80967001",
+                    snomedTerm: "Dental caries (disorder)"
+                });
+            }
+            
+            // Check for periodontitis
+            if (formData.cpiScore > 3) {
+                significantFindings.push({
+                    finding: "Severe periodontitis",
+                    snomedCode: "42665001",
+                    snomedTerm: "Periodontitis (disorder)"
+                });
+            }
+            
+            // Check for facial burns
+            if (formData.burnLocations.includes("164201")) {
+                significantFindings.push({
+                    finding: "Burn of face",
+                    snomedCode: "284468006",
+                    snomedTerm: "Burn of face (disorder)"
+                });
+            }
+            
+            // Check for neck burns
+            if (formData.burnLocations.includes("164202")) {
+                significantFindings.push({
+                    finding: "Burn of neck",
+                    snomedCode: "284474006",
+                    snomedTerm: "Burn of neck (disorder)"
+                });
+            }
+            
+            // Check for anxiety
+            if (formData.anxietyScore > 10) {
+                significantFindings.push({
+                    finding: "Abnormal anxiety level",
+                    snomedCode: "48694002",
+                    snomedTerm: "Anxiety (finding)"
+                });
+            }
+            
+            // Check for depression
+            if (formData.depressionScore > 10) {
+                significantFindings.push({
+                    finding: "Abnormal depression level",
+                    snomedCode: "88698009",
+                    snomedTerm: "Depression (finding)"
+                });
+            }
+            
+            return {
+                aiScore: aiScore,
+                riskLevel: riskLevel,
+                significantFindings: significantFindings
+            };
+        }
+        
+        // Display significant findings
+        function displaySignificantFindings(findings) {
+            if (!findings || findings.length === 0) {
+                document.getElementById("significantFindings").innerHTML = "<p>No significant findings detected requiring additional coding.</p>";
+                return;
+            }
+            
+            let html = "<h4>Significant Clinical Findings</h4>" +
+                      "<table>" +
+                      "<tr><th>Finding</th><th>SNOMED CT Code</th><th>SNOMED CT Term</th></tr>";
+                      
+            findings.forEach(finding => {
+                html += `<tr>
+                            <td>${finding.finding}</td>
+                            <td>${finding.snomedCode}</td>
+                            <td>${finding.snomedTerm}</td>
+                        </tr>`;
+            });
+            
+            html += "</table>";
+            document.getElementById("significantFindings").innerHTML = html;
+        }
+        
+        // Search SNOMED CT codes
+        function searchSnomedCodes() {
+            const searchTerm = document.getElementById("snomedSearchInput").value.trim();
+            
+            if (searchTerm.length < 3) {
+                document.getElementById("snomedSearchResults").innerHTML = "<div class='error-message'>Please enter at least 3 characters for search.</div>";
+                return;
+            }
+            
+            document.getElementById("snomedSearchResults").innerHTML = "<div class='loading'>Searching SNOMED CT codes...</div>";
+            
+            // Simulate API call to SNOMED CT service
+            setTimeout(() => {
+                const results = simulateSnomedSearch(searchTerm);
+                displaySnomedResults(results);
+            }, 1000);
+        }
+        
+        // Simulate SNOMED CT search
+        function simulateSnomedSearch(term) {
+            term = term.toLowerCase();
+            
+            // Predefined SNOMED CT codes related to oral health and burns
+            const snomedCodes = [
+                { concept: "DMFT Score", snomedCode: "80967001", snomedTerm: "Dental caries (disorder)" },
+                { concept: "CPI Score", snomedCode: "42665001", snomedTerm: "Periodontitis (disorder)" },
+                { concept: "OHI Score", snomedCode: "34735002", snomedTerm: "Oral hygiene (observable entity)" },
+                { concept: "OHIP-14 Score", snomedCode: "278343001", snomedTerm: "Oral discomfort (finding)" },
+                { concept: "Face", snomedCode: "284468006", snomedTerm: "Burn of face (disorder)" },
+                { concept: "Neck", snomedCode: "284474006", snomedTerm: "Burn of neck (disorder)" },
+                { concept: "Depression Score", snomedCode: "48694002", snomedTerm: "Anxiety (finding)" },
+                { concept: "Anxiety Score", snomedCode: "88698009", snomedTerm: "Depression (finding)" },
+                { concept: "Oral Care", snomedCode: "225358003", snomedTerm: "Oral care (procedure)" },
+                { concept: "Oral Health Risk Level", snomedCode: "444309008", snomedTerm: "Dental risk assessment (procedure)" },
+                { concept: "AI Risk Score", snomedCode: "444075008", snomedTerm: "Health risk assessment (procedure)" },
+                { concept: "Microstomia", snomedCode: "232714002", snomedTerm: "Microstomia (disorder)" },
+                { concept: "Oral Mucositis", snomedCode: "429040005", snomedTerm: "Ulceration of oral mucosa (disorder)" },
+                { concept: "Xerostomia", snomedCode: "87715008", snomedTerm: "Xerostomia (finding)" },
+                { concept: "Oral Pain", snomedCode: "27355003", snomedTerm: "Toothache (finding)" },
+                { concept: "Facial Scar", snomedCode: "75385009", snomedTerm: "Cicatrix of skin (disorder)" }
+            ];
+            
+            // Filter based on search term
+            return snomedCodes.filter(code => 
+                code.concept.toLowerCase().includes(term) || 
+                code.snomedTerm.toLowerCase().includes(term) || 
+                code.snomedCode.includes(term)
+            );
+        }
+        
+        // Display SNOMED CT search results
+        function displaySnomedResults(results) {
+            if (results.length === 0) {
+                document.getElementById("snomedSearchResults").innerHTML = "<div class='note'>No matching SNOMED CT codes found.</div>";
+                return;
+            }
+            
+            let html = "<h4>Search Results</h4>" +
+                      "<table>" +
+                      "<tr><th>OpenMRS Concept</th><th>SNOMED CT Code</th><th>SNOMED CT Term</th></tr>";
+                      
+            results.forEach(result => {
+                html += `<tr>
+                            <td>${result.concept}</td>
+                            <td>${result.snomedCode}</td>
+                            <td>${result.snomedTerm}</td>
+                        </tr>`;
+            });
+            
+            html += "</table>";
+            document.getElementById("snomedSearchResults").innerHTML = html;
+        }
+        
+        // Load patient assessment history
+        function loadPatientHistory() {
+            if (!currentPatient) return;
+            
+            document.getElementById("assessmentHistory").innerHTML = "<div class='loading'>Loading assessment history...</div>";
+            
+            // Simulate API call to get patient history
+            setTimeout(() => {
+                // For demo purposes, we'll use some mock data
+                // In a real implementation, this would come from an API call
+                const history = getMockAssessmentHistory();
+                displayAssessmentHistory(history);
+            }, 1000);
+        }
+        
+        // Get mock assessment history
+        function getMockAssessmentHistory() {
+            // Generate some random dates for the mock data
+            const today = new Date();
+            const oneMonthAgo = new Date(today);
+            oneMonthAgo.setMonth(today.getMonth() - 1);
+            
+            const twoMonthsAgo = new Date(today);
+            twoMonthsAgo.setMonth(today.getMonth() - 2);
+            
+            // Mock assessment history
+            return [
+                {
+                    id: "1",
+                    date: today.toISOString().split('T')[0],
+                    aiScore: "0.45",
+                    riskLevel: "164102", // Moderate Risk
+                    dmftScore: 12,
+                    cpiScore: 2.5,
+                    ohiScore: 3.2,
+                    facialDisfigurementScore: 3,
+                    burnLocations: ["164201", "164203"], // Face, Trunk
+                    significantFindings: [
+                        {
+                            finding: "Burn of face",
+                            snomedCode: "284468006",
+                            snomedTerm: "Burn of face (disorder)"
+                        }
+                    ]
+                },
+                {
+                    id: "2",
+                    date: oneMonthAgo.toISOString().split('T')[0],
+                    aiScore: "0.75",
+                    riskLevel: "164103", // High Risk
+                    dmftScore: 16,
+                    cpiScore: 3.5,
+                    ohiScore: 4.2,
+                    facialDisfigurementScore: 6,
+                    burnLocations: ["164201", "164202"], // Face, Neck
+                    significantFindings: [
+                        {
+                            finding: "Severe periodontitis",
+                            snomedCode: "42665001",
+                            snomedTerm: "Periodontitis (disorder)"
+                        },
+                        {
+                            finding: "Burn of face",
+                            snomedCode: "284468006",
+                            snomedTerm: "Burn of face (disorder)"
+                        },
+                        {
+                            finding: "Burn of neck",
+                            snomedCode: "284474006",
+                            snomedTerm: "Burn of neck (disorder)"
+                        }
+                    ]
+                },
+                {
+                    id: "3",
+                    date: twoMonthsAgo.toISOString().split('T')[0],
+                    aiScore: "0.85",
+                    riskLevel: "164103", // High Risk
+                    dmftScore: 18,
+                    cpiScore: 3.8,
+                    ohiScore: 4.5,
+                    facialDisfigurementScore: 7,
+                    burnLocations: ["164201", "164202", "164204"], // Face, Neck, Upper Extremities
+                    significantFindings: [
+                        {
+                            finding: "Severe dental caries",
+                            snomedCode: "80967001",
+                            snomedTerm: "Dental caries (disorder)"
+                        },
+                        {
+                            finding: "Severe periodontitis",
+                            snomedCode: "42665001",
+                            snomedTerm: "Periodontitis (disorder)"
+                        },
+                        {
+                            finding: "Burn of face",
+                            snomedCode: "284468006",
+                            snomedTerm: "Burn of face (disorder)"
+                        }
+                    ]
+                }
+            ];
+        }
+        
+        // Display assessment history
+        function displayAssessmentHistory(history) {
+            if (!history || history.length === 0) {
+                document.getElementById("assessmentHistory").innerHTML = "<div class='note'>No assessment history found for this patient.</div>";
+                return;
+            }
+            
+            let html = "<h4>Assessment History</h4>" +
+                      "<table>" +
+                      "<tr><th>Date</th><th>Risk Score</th><th>Risk Level</th><th>DMFT</th><th>CPI</th><th>OHI</th><th>Actions</th></tr>";
+                      
+            history.forEach(assessment => {
+                // Set risk level text and class
+                let riskLevelText = "";
+                let riskClass = "";
+                
+                if (assessment.riskLevel === "164103") {
+                    riskLevelText = "High Risk";
+                    riskClass = "high-risk";
+                } else if (assessment.riskLevel === "164102") {
+                    riskLevelText = "Moderate Risk";
+                    riskClass = "moderate-risk";
+                } else {
+                    riskLevelText = "Low Risk";
+                    riskClass = "low-risk";
+                }
+                
+                html += `<tr class="${riskClass}">
+                            <td>${assessment.date}</td>
+                            <td>${assessment.aiScore}</td>
+                            <td><span class="risk-indicator">${riskLevelText}</span></td>
+                            <td>${assessment.dmftScore}</td>
+                            <td>${assessment.cpiScore}</td>
+                            <td>${assessment.ohiScore}</td>
+                            <td><button onclick="viewAssessmentDetails('${assessment.id}')">View Details</button></td>
+                        </tr>`;
+            });
+            
+            html += "</table>";
+            document.getElementById("assessmentHistory").innerHTML = html;
+        }
+        
+        // View assessment details
+        function viewAssessmentDetails(assessmentId) {
+            // Get assessment details from mock data
+            // In a real implementation, this would be an API call
+            const history = getMockAssessmentHistory();
+            const assessment = history.find(a => a.id === assessmentId);
+            
+            if (!assessment) {
+                alert("Assessment details not found.");
+                return;
+            }
+            
+            // Format burn locations
+            const burnLocationsMap = {
+                "164201": "Face",
+                "164202": "Neck",
+                "164203": "Trunk",
+                "164204": "Upper Extremities",
+                "164205": "Lower Extremities"
+            };
+            
+            const burnLocations = assessment.burnLocations.map(loc => burnLocationsMap[loc] || loc).join(", ");
+            
+            // Set risk level text
+            let riskLevelText = "";
+            let riskClass = "";
+            
+            if (assessment.riskLevel === "164103") {
+                riskLevelText = "High Risk";
+                riskClass = "high-risk";
+            } else if (assessment.riskLevel === "164102") {
+                riskLevelText = "Moderate Risk";
+                riskClass = "moderate-risk";
+            } else {
+                riskLevelText = "Low Risk";
+                riskClass = "low-risk";
+            }
+            
+            // Build modal content
+            let modalContent = `
+                <div class="patient-info">
+                    <table>
+                        <tr>
+                            <th>Assessment Date</th>
+                            <td>${assessment.date}</td>
+                        </tr>
+                        <tr>
+                            <th>Risk Score</th>
+                            <td>${assessment.aiScore}</td>
+                        </tr>
+                        <tr>
+                            <th>Risk Level</th>
+                            <td><span class="risk-indicator ${riskClass}">${riskLevelText}</span></td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div class="section">
+                    <h4>Burn Information</h4>
+                    <table>
+                        <tr>
+                            <th>Burn Locations</th>
+                            <td>${burnLocations}</td>
+                        </tr>
+                        <tr>
+                            <th>Facial Disfigurement Score</th>
+                            <td>${assessment.facialDisfigurementScore}</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div class="section">
+                    <h4>Oral Health Indicators</h4>
+                    <table>
+                        <tr>
+                            <th>DMFT Score</th>
+                            <td>${assessment.dmftScore}</td>
+                        </tr>
+                        <tr>
+                            <th>CPI Score</th>
+                            <td>${assessment.cpiScore}</td>
+                        </tr>
+                        <tr>
+                            <th>OHI Score</th>
+                            <td>${assessment.ohiScore}</td>
+                        </tr>
+                    </table>
+                </div>
+            `;
+            
+            // Add significant findings if any
+            if (assessment.significantFindings && assessment.significantFindings.length > 0) {
+                modalContent += `
+                    <div class="section">
+                        <h4>Significant Clinical Findings</h4>
+                        <table>
+                            <tr>
+                                <th>Finding</th>
+                                <th>SNOMED CT Code</th>
+                                <th>SNOMED CT Term</th>
+                            </tr>
+                `;
+                
+                assessment.significantFindings.forEach(finding => {
+                    modalContent += `
+                        <tr>
+                            <td>${finding.finding}</td>
+                            <td>${finding.snomedCode}</td>
+                            <td>${finding.snomedTerm}</td>
+                        </tr>
+                    `;
+                });
+                
+                modalContent += `</table></div>`;
+            }
+            
+            // Add recommendations based on risk level
+            modalContent += `
+                <div class="section">
+                    <h4>Recommendations</h4>
+            `;
+            
+            if (assessment.riskLevel === "164103") {
+                modalContent += `<p>Schedule dental consultation within 48 hours. Implement intensive oral care protocol.</p>`;
+            } else if (assessment.riskLevel === "164102") {
+                modalContent += `<p>Enhanced oral care plan and weekly evaluation recommended.</p>`;
+            } else {
+                modalContent += `<p>Standard oral care, reassess in 2 weeks.</p>`;
+            }
+            
+            modalContent += `</div>`;
+            
+            // Set modal content and open it
+            document.getElementById("modalContent").innerHTML = modalContent;
+            document.getElementById("assessmentDetailsModal").style.display = "block";
+        }
+        
+        // Close modal
+        function closeModal() {
+            document.getElementById("assessmentDetailsModal").style.display = "none";
+        }
+        
+        // Validate form
+        function validateForm(forCalculation = false) {
+            const requiredFields = [
+                "burnLocation",
+                "burnDate",
+                "facialDisfigurementScore",
+                "dmftScore",
+                "cpiScore",
+                "ohiScore",
+                "ohipScore",
+                "brushingFrequency",
+                "anxietyScore",
+                "selfEsteemScore",
+                "socialSupportStatus",
+                "depressionScore",
+                "incomeLevel"
+            ];
+            
+            let isValid = true;
+            
+            requiredFields.forEach(field => {
+                const element = document.getElementById(field);
+                
+                // If it's a select multiple, check if at least one option is selected
+                if (element.tagName === "SELECT" && element.multiple) {
+                    if (Array.from(element.selectedOptions).length === 0) {
+                        isValid = false;
+                        element.style.borderColor = "red";
+                    } else {
+                        element.style.borderColor = "#ddd";
+                    }
+                }
+                // Otherwise, check if the value is empty
+                else if (!element.value) {
+                    isValid = false;
+                    element.style.borderColor = "red";
+                } else {
+                    element.style.borderColor = "#ddd";
+                }
+            });
+            
+            // If validating for submission (not just calculation), check if risk has been calculated
+            if (!forCalculation) {
+                const aiRiskScore = document.getElementById("aiRiskScore").value;
+                if (!aiRiskScore) {
+                    isValid = false;
+                    alert("Please calculate risk before saving the assessment.");
+                }
+            }
+            
+            return isValid;
+        }
+        
+        // Validate and submit form
+        function validateAndSubmit() {
+            if (!validateForm()) {
+                return;
+            }
+            
+            // Show loading message
+            document.getElementById("formSuccess").style.display = "none";
+            document.getElementById("formSuccess").innerHTML = "";
+            
+            // Simulate API call to save assessment
+            setTimeout(() => {
+                // Success message
+                document.getElementById("formSuccess").innerHTML = "Assessment saved successfully!";
+                document.getElementById("formSuccess").style.display = "block";
+                
+                // Reset form
+                document.getElementById("oral-health-form").reset();
+                document.getElementById("calculationResult").style.display = "none";
+                document.getElementById("significantFindings").innerHTML = "";
+                
+                // Add to history tab
+                if (currentAssessment) {
+                    // In a real implementation, this would be handled by reloading from the API
+                    loadPatientHistory();
+                }
+            }, 1500);
+        }
+        
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById("assessmentDetailsModal");
+            if (event.target === modal) {
+                modal.style.display = "none";
+            }
+        };
+    </script>
+</body>
+</html>

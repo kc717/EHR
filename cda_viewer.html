@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C-CDA Viewer</title>
+    
+    <!-- Bootstrap CSS for styling -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        .section-card {
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .section-title {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        .upload-section {
+            text-align: center;
+            padding: 40px;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        #fileInput {
+            display: none;
+        }
+        .upload-btn {
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .upload-btn:hover {
+            background-color: #2980b9;
+        }
+        .list-group-item {
+            border-left: none;
+            border-right: none;
+            border-radius: 0 !important;
+        }
+        .list-group-item:first-child {
+            border-top: none;
+        }
+        .list-group-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <!-- File Upload Section -->
+        <div class="upload-section">
+            <input type="file" id="fileInput" accept=".xml">
+            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                Choose C-CDA File
+            </button>
+            <p class="mt-2 text-muted">Supported format: XML</p>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results" style="display: none;">
+            <!-- Patient Demographics -->
+            <div class="section-card">
+                <h2 class="section-title">Patient Demographics</h2>
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>Name:</strong>
+                        <p id="patientName"></p>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Date of Birth:</strong>
+                        <p id="patientDOB"></p>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Gender:</strong>
+                        <p id="patientGender"></p>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Provider:</strong>
+                        <p id="providerName"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Allergies -->
+            <div class="section-card">
+                <h2 class="section-title">Allergies</h2>
+                <ul id="allergiesList" class="list-group"></ul>
+            </div>
+
+            <!-- Problems -->
+            <div class="section-card">
+                <h2 class="section-title">Problems</h2>
+                <ul id="problemsList" class="list-group"></ul>
+            </div>
+
+            <!-- Medications -->
+            <div class="section-card">
+                <h2 class="section-title">Medications</h2>
+                <ul id="medicationsList" class="list-group"></ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Required Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            $('#fileInput').on('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const xmlContent = e.target.result;
+                    parseCCDA(xmlContent);
+                };
+                reader.readAsText(file);
+            });
+
+            function parseCCDA(xmlContent) {
+                try {
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(xmlContent, "text/xml");
+                    const $xml = $(xmlDoc);
+
+                    // Extract patient name
+                    const given = $xml.find('patient name given').first().text() || '';
+                    const family = $xml.find('patient name family').first().text() || '';
+                    $('#patientName').text(`${given} ${family}`.trim() || 'N/A');
+
+                    // Extract DOB
+                    const dob = $xml.find('patient birthTime').attr('value') || '';
+                    if (dob) {
+                        const formattedDOB = `${dob.slice(0,4)}-${dob.slice(4,6)}-${dob.slice(6,8)}`;
+                        $('#patientDOB').text(formattedDOB);
+                    } else {
+                        $('#patientDOB').text('N/A');
+                    }
+
+                    // Extract gender
+                    const gender = $xml.find('patient administrativeGenderCode').attr('displayName') || 'N/A';
+                    $('#patientGender').text(gender);
+
+                    // Extract provider
+                    const provider = $xml.find('providerOrganization name').first().text() || 'N/A';
+                    $('#providerName').text(provider);
+
+                    // Extract allergies
+                    const $allergiesList = $('#allergiesList').empty();
+                    const allergiesSection = $xml.find('section:has(code[code="48765-2"])');
+                    const allergies = allergiesSection.find('text tbody tr');
+                    
+                    if (allergies.length) {
+                        allergies.each(function() {
+                            const substance = $(this).find('td:first').text().trim();
+                            const reaction = $(this).find('td:eq(1)').text().trim();
+                            if (substance) {
+                                const allergyText = reaction ? 
+                                    `${substance} - Reaction: ${reaction}` : substance;
+                                $allergiesList.append(`<li class="list-group-item">${allergyText}</li>`);
+                            }
+                        });
+                    } else {
+                        $allergiesList.append('<li class="list-group-item">No allergies recorded</li>');
+                    }
+
+                    // Extract problems
+                    const $problemsList = $('#problemsList').empty();
+                    const problemsSection = $xml.find('section:has(code[code="11450-4"])');
+                    const problems = problemsSection.find('text tbody tr, text list item');
+                    
+                    if (problems.length) {
+                        problems.each(function() {
+                            const problem = $(this).text().trim();
+                            if (problem) {
+                                $problemsList.append(`<li class="list-group-item">${problem}</li>`);
+                            }
+                        });
+                    } else {
+                        $problemsList.append('<li class="list-group-item">No problems recorded</li>');
+                    }
+
+                    // Extract medications
+                    const $medicationsList = $('#medicationsList').empty();
+                    const medicationsSection = $xml.find('section:has(code[code="10160-0"])');
+                    const medications = medicationsSection.find('text tbody tr');
+                    
+                    if (medications.length) {
+                        medications.each(function() {
+                            const med = $(this).find('td:first').text().trim();
+                            const dosage = $(this).find('td:eq(1)').text().trim();
+                            if (med) {
+                                const medText = dosage ? 
+                                    `${med} - ${dosage}` : med;
+                                $medicationsList.append(`<li class="list-group-item">${medText}</li>`);
+                            }
+                        });
+                    } else {
+                        $medicationsList.append('<li class="list-group-item">No medications recorded</li>');
+                    }
+
+                    // Show results
+                    $('#results').show();
+
+                } catch (error) {
+                    console.error('Error parsing CCDA:', error);
+                    alert('Error parsing C-CDA file. Please check the file format.');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
